@@ -7,11 +7,16 @@
 
 ```powershell
 copy demo\env.example .env
-pip install -r requirements.txt
+pip install -r requirements-local.txt
 python -m playwright install chromium
 python demo/seed_demo_db.py
 streamlit run app.py
 ```
+
+## Streamlit Cloud で公開（ポートフォリオ用）
+
+GitHub に push 後、[share.streamlit.io](https://share.streamlit.io) でデプロイ。  
+詳細は [docs/STREAMLIT_CLOUD.md](docs/STREAMLIT_CLOUD.md)
 
 ログイン: ユーザー **demo** または **reviewer**  
 検索: フリーワード「**デモ**」

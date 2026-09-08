@@ -2,12 +2,17 @@
 .env.*
 !.env.example
 !demo/env.example
+!.streamlit/secrets.toml.example
+
+.streamlit/secrets.toml
 
 nenkan.db
 sales_data.db
+demo/demo_sessions.db
 thumbnails/
 screenshots/
 *.log
+_last_*.txt
 .venv/
 __pycache__/
 *.pyc

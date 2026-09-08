@@ -23,10 +23,10 @@ import re
 from datetime import datetime
 from urllib.parse import urlparse
 from pathlib import Path
-from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
 
-load_dotenv(Path(__file__).resolve().parent / ".env")
+from env_bootstrap import bootstrap_env
+
+bootstrap_env(Path(__file__).resolve().parent)
 
 
 DB_FILE = "houjin.db"
@@ -1288,6 +1288,8 @@ def scrape(
     # ── Playwright スクレイピング ──────────────
     html = ""
     try:
+        from playwright.sync_api import sync_playwright
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context(

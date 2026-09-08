@@ -9,6 +9,10 @@ from pathlib import Path
 
 _APP_DIR = Path(__file__).resolve().parent
 
+from env_bootstrap import bootstrap_env, is_cloud_deploy, is_demo_mode, is_web_scraping_disabled
+
+bootstrap_env(_APP_DIR)
+
 # 起動確認用（ログより先に書く）。SalesScraperSetup フォルダ内の _last_app_load.txt を見る
 try:
     (_APP_DIR / "_last_app_load.txt").write_text(
@@ -17,8 +21,6 @@ try:
     )
 except OSError:
     pass
-
-from dotenv import load_dotenv
 
 # ── ロガー設定（最初に確定させる。他のimportより必ず前）──────────────────────
 # ファイル名を salescaper.log にすることで古い app.log と競合しない。
@@ -49,9 +51,6 @@ for _name in ("app", "saved_list", "scraper"):
 
 logger = logging.getLogger("app")
 logger.info("app.py 起動")  # 起動確認ログ
-
-# .env をアプリフォルダから読み込む（起動.command の cwd に依存しない）
-load_dotenv(_APP_DIR / ".env")
 
 _NENKAN_DB_PATH = os.getenv("NENKAN_DB_PATH") or str(_APP_DIR / "nenkan.db")
 _DB_CONNECT_NOTE = ""
@@ -2800,11 +2799,17 @@ def main():
     )
     st.title("🔍 SalesScraper – 営業リスト作成ツール")
 
-    if os.getenv("SALES_DEMO_MODE", "").strip().lower() in ("1", "true", "yes", "on"):
-        st.info(
-            "🎭 **デモモード** — 架空企業15社・ローカルCRM（Supabase不要）。"
-            " 手順は `demo/README.md` を参照。"
-        )
+    if is_demo_mode():
+        if is_cloud_deploy():
+            st.info(
+                "🎭 **ポートフォリオデモ** — 架空企業15社。"
+                " ①ユーザー `demo` でログイン → ②「デモ」で検索 → ③担当企業リストでメモ編集"
+            )
+        else:
+            st.info(
+                "🎭 **デモモード** — 架空企業15社・ローカルCRM（Supabase不要）。"
+                " 手順は `demo/README.md` を参照。"
+            )
 
     # URLからログイン復元（Supabase往復なし・リロード対策）
     if not get_current_user():
@@ -2868,11 +2873,18 @@ def main():
             key="free_word",
         )
 
-        enable_scraping = st.checkbox(
-            "🌐 Webサイト取得・技術スタック判定を行う（時間がかかります）",
-            value=False,
-            key="enable_scraping_chk",
-        )
+        enable_scraping = False
+        if is_web_scraping_disabled():
+            st.caption(
+                "🌐 Web取得はクラウドデモでは無効です。"
+                " 弱点・技術情報は検索結果に表示済みです。"
+            )
+        else:
+            enable_scraping = st.checkbox(
+                "🌐 Webサイト取得・技術スタック判定を行う（時間がかかります）",
+                value=False,
+                key="enable_scraping_chk",
+            )
 
         _btn_l, _btn_c, _btn_r = st.columns([3, 2, 3])
         with _btn_c:

@@ -1,0 +1,6 @@
+# ローカル開発用（Web取得・AI解析）
+-r requirements.txt
+playwright
+google-generativeai
+google-genai
+openai

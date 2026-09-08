@@ -28,9 +28,10 @@ from typing import Optional
 
 import pandas as pd
 from supabase import create_client, Client
-from dotenv import load_dotenv
 
-load_dotenv()
+from env_bootstrap import bootstrap_env
+
+bootstrap_env(Path(__file__).resolve().parent)
 
 logger = logging.getLogger(__name__)
 

@@ -1,28 +1,10 @@
-# ── Webアプリ ──────────────────────────
+# Streamlit Community Cloud 用（軽量）
 streamlit
 streamlit-folium
 folium
 requests
 python-dotenv
 pandas
-
-# ── スクレイピング ───────────────────────
-playwright
 dnspython
-
-# ── AI（Gemini：DB構築・スクレイピング解析） ──
-google-generativeai      # build_nenkan_db.py 用（PDFスキャン）
-google-genai             # scraper.py 用（Webサイト解析）
-
-# ── AI（OpenAI：スクレイピング解析・任意） ──
-# scraper.py は SCRAPER_AI_PROVIDER=gemini にすれば不要
-openai
-
-# ── 不要になったため削除 ──────────────────
-# anthropic  ← Cloud Run廃止に伴い削除
-# pypdf      ← 未使用
-# streamlit-cookies-manager ← 未使用確認後に削除可
 streamlit-cookies-manager
-
-# ── データベース ───────────────────────
 supabase
