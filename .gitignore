@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+!demo/env.example
+
+nenkan.db
+sales_data.db
+thumbnails/
+screenshots/
+*.log
+.venv/
+__pycache__/
+*.pyc
