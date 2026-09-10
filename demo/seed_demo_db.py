@@ -6,7 +6,7 @@
     python demo/seed_demo_db.py --out demo/demo_companies.db
 
 生成物:
-    - csv_companies テーブル（架空企業 15 社）
+    - csv_companies テーブル（架空企業 45 社）
     - executives テーブル（空。検索SQL互換用）
     - 企業年鑑の実データは一切含まない
 """
@@ -27,8 +27,25 @@ sys.path.insert(0, str(ROOT))
 
 from csv_import import CREATE_TABLE_SQL, INDEX_SQLS, EXEC_CREATE_SQL, EXEC_INDEX_SQLS  # noqa: E402
 
+# app.py の REGIONS と同期（「その他」除く）
+DEMO_REGIONS: list[str] = [
+    "広島市中区", "広島市東区", "広島市南区", "広島市西区",
+    "広島市安佐南区", "広島市安佐北区", "広島市安芸区", "広島市佐伯区",
+    "呉市", "竹原市", "三原市", "尾道市", "福山市", "府中市",
+    "三次市", "庄原市", "大竹市", "東広島市", "廿日市市",
+    "安芸高田市", "江田島市", "安芸郡府中町",
+]
+
+DEMO_INDUSTRIES: list[str] = [
+    "商社・卸売", "金属加工", "情報通信", "建設・リフォーム", "運輸・物流",
+    "食品製造", "印刷", "医療・福祉", "設備工事", "建設", "商社",
+    "デザイン", "サービス", "製造", "小売",
+]
+
+TARGET_COMPANY_COUNT = 45
+
 # すべて架空。実在企業・年鑑データとの対応は意図的にない。
-DEMO_COMPANIES: list[dict] = [
+CORE_DEMO_COMPANIES: list[dict] = [
     {
         "name": "株式会社デモ商事",
         "address": "広島県広島市中区デモ町1-2-3",
@@ -39,7 +56,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "45名",
         "established": "1985年4月",
         "industry": "商社・卸売",
-        "business": "日用品・資材の卸売",
+        "business": "日用品・資材の卸売（デモ用架空データ）",
         "philosophy": "地域とともに歩む商社を目指します。",
         "banks": "広島デモ銀行",
         "customers": "小売店、公共機関",
@@ -62,7 +79,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "12名",
         "established": "2001年6月",
         "industry": "金属加工",
-        "business": "精密部品の切削加工",
+        "business": "精密部品の切削加工（デモ用）",
         "philosophy": "ものづくりで地域産業を支える。",
         "source_type": "yearbook",
         "latitude": 34.4859,
@@ -78,7 +95,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "78名",
         "established": "2010年3月",
         "industry": "情報通信",
-        "business": "業務システム開発・Web制作",
+        "business": "業務システム開発・Web制作（デモ用）",
         "philosophy": "技術で営業現場を効率化する。",
         "banks": "中国デモ銀行",
         "source_type": "yearbook",
@@ -95,7 +112,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "30名",
         "established": "1998年11月",
         "industry": "建設・リフォーム",
-        "business": "住宅リフォーム・外構工事",
+        "business": "住宅リフォーム・外構工事（デモ用）",
         "source_type": "yearbook",
         "weak_points": '{"is_non_ssl":false,"is_no_website":true,"is_non_responsive":false}',
     },
@@ -109,7 +126,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "120名",
         "established": "1975年2月",
         "industry": "運輸・物流",
-        "business": "一般貨物自動車運送",
+        "business": "一般貨物自動車運送（デモ用）",
         "banks": "呉デモ信用金庫",
         "customers": "製造業、商社",
         "source_type": "yearbook",
@@ -125,7 +142,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "200名",
         "established": "1967年10月",
         "industry": "食品製造",
-        "business": "惣菜・弁当の製造販売",
+        "business": "惣菜・弁当の製造販売（デモ用）",
         "philosophy": "安全でおいしい食を届ける。",
         "source_type": "yearbook",
     },
@@ -139,7 +156,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "18名",
         "established": "1992年8月",
         "industry": "印刷",
-        "business": "チラシ・パンフレット印刷",
+        "business": "チラシ・パンフレット印刷（デモ用）",
         "source_type": "yearbook",
         "server_info": "Xserver Inc.",
     },
@@ -153,12 +170,12 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "65名",
         "established": "2005年1月",
         "industry": "医療・福祉",
-        "business": "介護施設運営支援",
+        "business": "介護施設運営支援（デモ用）",
         "source_type": "yearbook",
     },
     {
         "name": "株式会社ワカバデモ",
-        "address": "広島市西区商工センター2丁目13-14",
+        "address": "広島県広島市西区商工センター2丁目13-14",
         "tel": "082-000-9009",
         "website": "https://example.com",
         "president": "若葉 正記",
@@ -176,6 +193,8 @@ DEMO_COMPANIES: list[dict] = [
         "tel": "082-000-1010",
         "website": "https://streamlit.io",
         "president": "新規 登録",
+        "industry": "情報通信",
+        "business": "デモ用の新規登録サンプル企業",
         "source_type": "manual",
     },
     {
@@ -188,7 +207,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "42名",
         "established": "2015年5月",
         "industry": "情報通信",
-        "business": "セキュリティ監視・ネットワーク構築",
+        "business": "セキュリティ監視・ネットワーク構築（デモ用）",
         "source_type": "yearbook",
         "weak_points": '{"is_non_ssl":true,"is_no_website":false,"is_non_responsive":false}',
     },
@@ -202,7 +221,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "25名",
         "established": "1988年3月",
         "industry": "建設",
-        "business": "土木・舗装工事",
+        "business": "土木・舗装工事（デモ用）",
         "officers": "（代）山田 工",
         "source_type": "yearbook",
     },
@@ -216,7 +235,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "88名",
         "established": "1970年7月",
         "industry": "商社",
-        "business": "海産物・食品の輸出入",
+        "business": "海産物・食品の輸出入（デモ用）",
         "is_listed": 0,
         "source_type": "yearbook",
     },
@@ -230,7 +249,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "8名",
         "established": "2019年9月",
         "industry": "デザイン",
-        "business": "Webデザイン・ブランディング",
+        "business": "Webデザイン・ブランディング（デモ用）",
         "source_type": "manual",
     },
     {
@@ -243,7 +262,7 @@ DEMO_COMPANIES: list[dict] = [
         "employees": "310名",
         "established": "1955年12月",
         "industry": "サービス",
-        "business": "ホテル・宴会運営",
+        "business": "ホテル・宴会運営（デモ用）",
         "banks": "広島デモ銀行、中国デモ銀行",
         "customers": "法人旅行、婚礼",
         "source_type": "yearbook",
@@ -258,6 +277,134 @@ COLUMNS = [
     "tech_stack", "server_info", "weak_points", "renewal_score",
     "latitude", "longitude", "source_type", "data_source", "created_at", "is_listed",
 ]
+
+
+def _match_region(address: str) -> str | None:
+    """app.py の _csv_region_clause と同じ地域判定（簡易版）。"""
+    if not address:
+        return None
+    if "府中町" in address and "府中市" not in address:
+        return "安芸郡府中町"
+    if "府中市" in address:
+        return "府中市"
+    for region in DEMO_REGIONS:
+        if region in ("府中市", "安芸郡府中町"):
+            continue
+        if region.startswith("広島市") and region.endswith("区"):
+            ward = region[3:]
+            if f"広島市{ward}" in address or f"広島市 {ward}" in address:
+                return region
+        elif region in address:
+            return region
+    return None
+
+
+def _address_for_region(region: str, block: int) -> str:
+    if region == "安芸郡府中町":
+        return f"広島県安芸郡府中町デモ{block}丁目1-1"
+    return f"広島県{region}デモ{block}丁目1-1"
+
+
+def _region_label(region: str) -> str:
+    return (
+        region.replace("広島市", "")
+        .replace("安芸郡", "")
+        .replace("市", "")
+        .replace("町", "")[:6]
+        or "広島"
+    )
+
+
+def _make_generated_company(region: str, industry: str, seq: int) -> dict:
+    label = _region_label(region)
+    ind_short = industry.replace("・", "").replace("／", "")[:4]
+    name = f"株式会社デモ{label}{ind_short}{seq:02d}"
+    president = f"デモ {label}{seq}"
+    capital = f"{(seq % 9 + 1) * 500}万円"
+    employees = f"{(seq % 20 + 5) * 3}名"
+    year = 1980 + (seq % 35)
+    month = (seq % 12) + 1
+    website = "https://example.com" if seq % 5 else "情報なし"
+    row: dict = {
+        "name": name,
+        "address": _address_for_region(region, seq),
+        "tel": f"082-1{seq:04d}",
+        "website": website,
+        "president": president,
+        "capital": capital,
+        "employees": employees,
+        "established": f"{year}年{month}月",
+        "industry": industry,
+        "business": f"{industry}のデモ用架空企業（{region}）",
+        "source_type": "yearbook",
+    }
+    if seq % 4 == 0:
+        row["weak_points"] = (
+            '{"is_non_ssl":true,"is_no_website":false,"is_non_responsive":false}'
+            if seq % 8 == 0
+            else '{"is_non_ssl":false,"is_no_website":false,"is_non_responsive":true}'
+        )
+    if seq % 3 == 0:
+        row["tech_stack"] = '{"cms":"WordPress","technologies":["WordPress"],"detected":["WordPress"]}'
+    return row
+
+
+def build_demo_companies() -> list[dict]:
+    """コア15社＋地域・業種カバレッジ用の自動生成で45社を組み立てる。"""
+    companies = [dict(c) for c in CORE_DEMO_COMPANIES]
+    seen_names = {c["name"] for c in companies}
+    covered_pairs: set[tuple[str, str]] = set()
+    covered_regions: set[str] = set()
+
+    for c in companies:
+        region = _match_region(c.get("address", ""))
+        industry = (c.get("industry") or "").strip()
+        if region:
+            covered_regions.add(region)
+            if industry:
+                covered_pairs.add((region, industry))
+
+    seq = 100
+
+    def _add(region: str, industry: str) -> None:
+        nonlocal seq
+        while len(companies) < TARGET_COMPANY_COUNT:
+            seq += 1
+            row = _make_generated_company(region, industry, seq)
+            if row["name"] in seen_names:
+                continue
+            companies.append(row)
+            seen_names.add(row["name"])
+            covered_regions.add(region)
+            covered_pairs.add((region, industry))
+            return
+
+    # 1) 未カバー地域に最低1社
+    for region in DEMO_REGIONS:
+        if region not in covered_regions:
+            industry = DEMO_INDUSTRIES[len(covered_regions) % len(DEMO_INDUSTRIES)]
+            _add(region, industry)
+
+    # 2) 各地域×業種の組み合わせを追加（45社まで）
+    pair_idx = 0
+    while len(companies) < TARGET_COMPANY_COUNT:
+        region = DEMO_REGIONS[pair_idx % len(DEMO_REGIONS)]
+        industry = DEMO_INDUSTRIES[(pair_idx // len(DEMO_REGIONS)) % len(DEMO_INDUSTRIES)]
+        pair_idx += 1
+        if (region, industry) in covered_pairs:
+            continue
+        _add(region, industry)
+
+    # 3) まだ足りなければ順番に追加
+    while len(companies) < TARGET_COMPANY_COUNT:
+        region = DEMO_REGIONS[len(companies) % len(DEMO_REGIONS)]
+        industry = DEMO_INDUSTRIES[len(companies) % len(DEMO_INDUSTRIES)]
+        _add(region, industry)
+
+    return companies[:TARGET_COMPANY_COUNT]
+
+
+DEMO_COMPANIES: list[dict] = build_demo_companies()
 
 
 def seed(db_path: Path) -> None:
@@ -294,7 +441,14 @@ def seed(db_path: Path) -> None:
 
         conn.commit()
         count = conn.execute("SELECT COUNT(*) FROM csv_companies").fetchone()[0]
+        missing = [r for r in DEMO_REGIONS if r not in {
+            _match_region(a) for a, in conn.execute("SELECT address FROM csv_companies")
+        }]
         print(f"OK: {db_path} に {count} 社（架空データ）を作成しました。")
+        if missing:
+            print(f"警告: 未カバー地域 {missing}")
+        else:
+            print("OK: 全22地域をカバーしています。")
     finally:
         conn.close()
 
@@ -312,10 +466,10 @@ def seed_crm(crm_path: Path) -> None:
         {
             "username": "demo",
             "company_name": "株式会社デモ商事",
-            "address": DEMO_COMPANIES[0]["address"],
-            "tel": DEMO_COMPANIES[0]["tel"],
-            "website_url": DEMO_COMPANIES[0]["website"],
-            "industry": DEMO_COMPANIES[0]["industry"],
+            "address": CORE_DEMO_COMPANIES[0]["address"],
+            "tel": CORE_DEMO_COMPANIES[0]["tel"],
+            "website_url": CORE_DEMO_COMPANIES[0]["website"],
+            "industry": CORE_DEMO_COMPANIES[0]["industry"],
             "crm_status": "商談中",
             "crm_assignee": "demo",
             "crm_memo": "来週アポ。WebサイトのSSL対応を提案予定。",
@@ -325,8 +479,8 @@ def seed_crm(crm_path: Path) -> None:
         {
             "username": "reviewer",
             "company_name": "有限会社サンプル工業",
-            "address": DEMO_COMPANIES[1]["address"],
-            "industry": DEMO_COMPANIES[1]["industry"],
+            "address": CORE_DEMO_COMPANIES[1]["address"],
+            "industry": CORE_DEMO_COMPANIES[1]["industry"],
             "crm_status": "架電済み",
             "crm_assignee": "reviewer",
             "crm_memo": "担当者不在。再架電 8/20。",
@@ -336,8 +490,8 @@ def seed_crm(crm_path: Path) -> None:
         {
             "username": "demo",
             "company_name": "株式会社テックフロンティア",
-            "address": DEMO_COMPANIES[2]["address"],
-            "industry": DEMO_COMPANIES[2]["industry"],
+            "address": CORE_DEMO_COMPANIES[2]["address"],
+            "industry": CORE_DEMO_COMPANIES[2]["industry"],
             "crm_status": "アポ取得",
             "crm_assignee": "demo",
             "crm_memo": "",

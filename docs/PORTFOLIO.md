@@ -50,7 +50,7 @@ SalesScraper-portfolio/          # 本番リポジトリとは別名推奨
 ├── saved_list.py
 ├── csv_search.py
 ├── demo/
-│   ├── seed_demo_db.py          # 架空15社生成
+│   ├── seed_demo_db.py          # 架空45社生成
 │   ├── demo_companies.db        # git に含めてOK（生成後）
 │   ├── env.example
 │   └── README.md
@@ -91,7 +91,7 @@ Supabase で CRM まで見せる場合: `demo/supabase_schema.sql` をデモプ�
 
 ## 面接・説明用トーク（30秒）
 
-「営業がリストアップから訪問準備まで行き来していた業務を、Streamlit の1アプリにまとめました。企業DBは SQLite、フォロー管理は Supabase でチーム共有です。Web取得では Playwright でサイトを見に行き、SSL やスマホ対応などの弱点を自動判定します。年鑑データは社内秘のため、ポートフォリオでは架空15社のデモDBで再現しています。」
+「営業がリストアップから訪問準備まで行き来していた業務を、Streamlit の1アプリにまとめました。企業DBは SQLite、フォロー管理は Supabase でチーム共有です。Web取得では Playwright でサイトを見に行き、SSL やスマホ対応などの弱点を自動判定します。年鑑データは社内秘のため、ポートフォリオでは架空45社（全22地域カバー）のデモDBで再現しています。」
 
 ---
 

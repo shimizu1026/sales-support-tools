@@ -2807,12 +2807,12 @@ def main():
     if is_demo_mode():
         if is_cloud_deploy():
             st.info(
-                "🎭 **ポートフォリオデモ** — 架空企業15社。"
+                "🎭 **ポートフォリオデモ** — 架空企業45社。"
                 " ①ユーザー `demo` でログイン → ②「デモ」で検索 → ③担当企業リストでメモ編集"
             )
         else:
             st.info(
-                "🎭 **デモモード** — 架空企業15社・ローカルCRM（Supabase不要）。"
+                "🎭 **デモモード** — 架空企業45社・ローカルCRM（Supabase不要）。"
                 " 手順は `demo/README.md` を参照。"
             )
 

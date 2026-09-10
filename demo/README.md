@@ -34,7 +34,7 @@ streamlit run app.py
 
 |---------|------|
 
-| `demo/demo_companies.db` | 架空企業 15 社 |
+| `demo/demo_companies.db` | 架空企業 45 社（全22地域カバー） |
 
 | `demo/demo_crm.db` | 担当企業リスト サンプル 3 件 |
 
