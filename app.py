@@ -363,6 +363,11 @@ REGIONS = [
     "その他（直接入力）",
 ]
 
+SORT_OPTIONS: dict[str, tuple[str | None, bool]] = {
+    "🔴 Web提案スコア順（高い順）": ("Web提案スコア", False),
+    "📋 取得順（デフォルト）": (None, False),
+}
+
 def _load_industries_from_db() -> list[str]:
     """後方互換。起動時は _bootstrap_app が INDUSTRIES を設定する。"""
     if _RESOLVED_NENKAN_DB is not None:
@@ -2873,6 +2878,16 @@ def main():
             key="free_word",
         )
 
+        if "sort_order" not in st.session_state:
+            st.session_state["sort_order"] = "📋 取得順（デフォルト）"
+        _sort_keys = list(SORT_OPTIONS.keys())
+        sort_order = st.selectbox(
+            "📊 表示順",
+            options=_sort_keys,
+            index=_sort_keys.index(st.session_state["sort_order"]),
+            key="sort_order_form",
+        )
+
         enable_scraping = False
         if is_web_scraping_disabled():
             st.caption(
@@ -2900,6 +2915,7 @@ def main():
                 "industry_select": industry_select,
                 "free_word": free_word,
                 "enable_scraping": enable_scraping,
+                "sort_order": sort_order,
             }
             st.rerun()
 
@@ -2911,9 +2927,11 @@ def main():
         industry_select = pending["industry_select"]
         free_word = pending["free_word"]
         enable_scraping = pending["enable_scraping"]
+        sort_order = pending.get("sort_order", st.session_state.get("sort_order", "📋 取得順（デフォルト）"))
+        st.session_state["sort_order"] = sort_order
         logger.info(
-            "検索開始 region=%s industry=%s free_word=%s scraping=%s",
-            region, industry, free_word, enable_scraping,
+            "検索開始 region=%s industry=%s free_word=%s scraping=%s sort=%s",
+            region, industry, free_word, enable_scraping, sort_order,
         )
 
         with st.spinner("企業年鑑DBを検索中…"):
@@ -3344,17 +3362,13 @@ def main():
             st.markdown(f"{r['Web提案優先度']} **{r['社名']}** ({r['Web提案スコア']}点)")
         st.divider()
 
-    # ── ソート設定 ────────────────────────────
-    SORT_OPTIONS = {
-        "🔴 Web提案スコア順（高い順）": ("Web提案スコア", False),
-        "📋 取得順（デフォルト）":      (None, False),
-    }
     if "sort_order" not in st.session_state:
         st.session_state["sort_order"] = "📋 取得順（デフォルト）"
 
     st.subheader(f"📋 検索結果一覧（{len(df)} 件）")
+    st.caption(f"表示順: {st.session_state['sort_order']}")
 
-    col_all, col_none, col_sort = st.columns([1, 1, 4])
+    col_all, col_none = st.columns([1, 1])
     with col_all:
         if st.button("☑ 全選択"):
             for idx in df.index:
@@ -3364,18 +3378,6 @@ def main():
         if st.button("☐ 全解除"):
             for idx in df.index:
                 st.session_state[f"check_{idx}"] = False
-            st.rerun()
-    with col_sort:
-        new_sort = st.selectbox(
-            "並び替え",
-            options=list(SORT_OPTIONS.keys()),
-            index=list(SORT_OPTIONS.keys()).index(st.session_state["sort_order"]),
-            key="sort_select",
-            label_visibility="collapsed",
-        )
-        if new_sort != st.session_state["sort_order"]:
-            st.session_state["sort_order"] = new_sort
-            st.session_state["current_page"] = 0
             st.rerun()
 
     # ソートを適用した表示用 DataFrame を作成（元の df は変更しない）
