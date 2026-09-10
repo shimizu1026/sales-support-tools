@@ -780,7 +780,26 @@ a { color: var(--accent); word-break: break-all; }
   .kv { margin-bottom: 4px; }
   .comment p { padding: 5px 7px; }
   a { color: inherit; text-decoration: none; }
-  .thumb { max-width: 170px; }
+  .thumb { max-width: 130px; max-height: 85mm; object-fit: contain; }
+  .company {
+    max-height: 200mm;
+    height: 200mm;
+    overflow: hidden;
+  }
+  .comment p {
+    max-height: 2.6em;
+    overflow: hidden;
+  }
+  .weakpoints li { margin-bottom: 3px; }
+  .company-body {
+    display: table !important;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .company-body .col {
+    display: table-cell !important;
+    vertical-align: top;
+  }
 }
 """
 
@@ -804,8 +823,63 @@ a { color: var(--accent); word-break: break-all; }
 """
 
 
-def html_to_pdf(html_str: str) -> bytes:
-    """HTML文字列を A4 PDF に変換（別プロセスで Playwright を起動）。"""
+_PDF_RENDER_CSS = """
+@page { size: A4 landscape; margin: 4mm; }
+body {
+  margin: 0 !important;
+  font-size: 7.5pt !important;
+  line-height: 1.35 !important;
+  font-family: "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+}
+.no-print { display: none !important; }
+.company {
+  width: 100%;
+  max-height: 202mm;
+  height: 202mm;
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 5px 7px !important;
+  page-break-after: always;
+  break-after: page;
+  box-sizing: border-box;
+  border-radius: 0;
+  box-shadow: none;
+}
+.company:last-child { page-break-after: auto; break-after: auto; }
+.company-head { margin-bottom: 4px !important; padding-bottom: 4px !important; }
+.company-head h2 { font-size: 11pt !important; }
+.company-body {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+.company-body .col {
+  display: table-cell !important;
+  vertical-align: top !important;
+  padding-right: 5px;
+}
+.col .block { margin-bottom: 3px !important; }
+.col h4 { font-size: 7pt !important; margin-bottom: 2px !important; }
+.comment p { font-size: 7pt !important; max-height: 2.6em; overflow: hidden; }
+.info-table, .sales-table { font-size: 7pt !important; }
+.info-table th, .info-table td,
+.sales-table th, .sales-table td { padding: 1px 3px !important; }
+.weakpoints li { margin-bottom: 2px !important; font-size: 7pt !important; }
+.weakpoints .talk { font-size: 6.5pt !important; }
+.thumb { max-width: 125px !important; max-height: 88mm !important; object-fit: contain; }
+.badge { font-size: 6.5pt !important; }
+.doc-banner { font-size: 7pt !important; margin-bottom: 3px !important; }
+"""
+
+
+def _inject_pdf_css(html_str: str) -> str:
+    extra = f"<style>{_PDF_RENDER_CSS}</style>"
+    if "</head>" in html_str:
+        return html_str.replace("</head>", f"{extra}</head>", 1)
+    return extra + html_str
+
+
+def _html_to_pdf_playwright(html_str: str) -> bytes:
     import subprocess
     import sys
     import tempfile
@@ -829,3 +903,35 @@ def html_to_pdf(html_str: str) -> bytes:
         if not pdf_path.is_file():
             raise RuntimeError("PDFファイルが作成されませんでした")
         return pdf_path.read_bytes()
+
+
+def _html_to_pdf_weasyprint(html_str: str) -> bytes:
+    from io import BytesIO
+
+    from weasyprint import HTML
+
+    buf = BytesIO()
+    HTML(string=html_str, base_url=str(Path(__file__).resolve().parent)).write_pdf(buf)
+    return buf.getvalue()
+
+
+def html_to_pdf(html_str: str) -> bytes:
+    """HTML文字列を A4横1枚/社の PDF に変換（Playwright → WeasyPrint の順で試行）。"""
+    import importlib.util
+
+    prepared = _inject_pdf_css(html_str)
+    errors: list[str] = []
+
+    if importlib.util.find_spec("playwright") is not None:
+        try:
+            return _html_to_pdf_playwright(prepared)
+        except Exception as exc:
+            errors.append(f"Playwright: {exc}")
+
+    try:
+        return _html_to_pdf_weasyprint(prepared)
+    except Exception as exc:
+        errors.append(f"WeasyPrint: {exc}")
+
+    detail = " / ".join(errors) if errors else "PDFエンジンが見つかりません"
+    raise RuntimeError(detail)

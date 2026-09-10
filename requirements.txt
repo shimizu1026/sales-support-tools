@@ -8,3 +8,4 @@ pandas
 dnspython
 streamlit-cookies-manager
 supabase
+weasyprint

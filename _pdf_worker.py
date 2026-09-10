@@ -14,7 +14,13 @@ def main() -> int:
     pdf_path = Path(sys.argv[2])
     html_str = html_path.read_text(encoding="utf-8")
 
-    from playwright.sync_api import sync_playwright
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        from weasyprint import HTML
+
+        HTML(string=html_str).write_pdf(str(pdf_path))
+        return 0
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
